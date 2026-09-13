@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Music Player</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js"
+      crossorigin="anonymous"
+    ></script>
+  </head>
+  <body>
+    <div class="container">
+      <div class="music-player">
+        <nav>
+          <div class="circle" onclick="previousSong()">
+            <i class="fa-solid fa-angles-left"></i>
+          </div>
+          <div class="circle" id="menuBtn" onclick="toggleLibrary()">
+            <i class="fa-solid fa-bars"></i>
+          </div>
+        </nav>
+
+        <img
+          src="media/ab67616d00001e024d02d148d2ae249bdd2991e3.jpg"
+          class="song-img"
+          id="song-img"
+          alt="Song Thumbnail"
+        />
+        <h1 id="song-title">BIGBANG - BiiiG</h1>
+        <p id="song-artist">BIGBANG</p>
+
+        <audio id="song">
+          <source src="media/G-DRAGON - POWER (Official Video).mp3" type="audio/mpeg" />
+        </audio>
+
+        <input type="range" value="0" id="progress" />
+
+        <div class="controls">
+          <div onclick="previousSong()">
+            <i class="fa-solid fa-angles-left"></i>
+          </div>
+          <div onclick="playPause()">
+            <i class="fa-solid fa-play" id="ctrlIcon"></i>
+          </div>
+          <div onclick="nextSong()">
+            <i class="fa-solid fa-forward"></i>
+          </div>
+        </div>
+
+        <div class="library-panel" id="libraryPanel">
+          <div class="library-header">
+            <h2>Library</h2>
+            <button
+              class="library-close"
+              type="button"
+              aria-label="Collapse library"
+              onclick="toggleLibrary()"
+            >
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+          <ul class="song-list" id="songList"></ul>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const songs = [
+        {
+          title: "BIGBANG - BiiiG",
+          artist: "BIGBANG",
+          src: "media/BIGBANG - BiiiG MV.mp3",
+          cover: "media/ab67616d00001e024d02d148d2ae249bdd2991e3.jpg",
+        },
+        {
+          title: "Baby Goodnight",
+          artist: "GD&TOP",
+          src: "media/GD&TOP -  BABY GOOD NIGHT M_V.mp3",
+          cover: "media/baby goodnight thumbnail.jpg.jpg",
+        },
+        {
+          title: "Lil Kasalanan Shortie",
+          artist: "hev-Abi",
+          src: "media/Hev Abi - Lil Kasalanan Shortie.mp3",
+          cover: "media/lil-kasalanan-shortie.jpg",
+        },
+        {
+          title: "SUMMER CRUSH",
+          artist: "HellMerry",
+          src: "media/Summer Crush - HELLMERRY.mp3",
+          cover: "media/Summer crush thumbnail.jpg",
+        },
+        {
+          title: "POWER",
+          artist: "G-Dragon",
+          src: "media/G-DRAGON - POWER (Official Video).mp3",
+          cover: "media/Power Thumbnail.jpg",
+        },
+        {
+          title: "Pag-Ibig ay Kanibalismo II",
+          artist: "fitterkarma",
+          src: "media/fitterkarma - Pag-Ibig ay Kanibalismo II (Lyrics).mp3",
+          cover: "media/kanibalismo.jpg",
+        },
+      ];
+
+      const progress = document.getElementById("progress");
+      const song = document.getElementById("song");
+      let ctrlIcon = document.getElementById("ctrlIcon");
+      const libraryPanel = document.getElementById("libraryPanel");
+      const songList = document.getElementById("songList");
+      let currentSongIndex = 4;
+
+      function setControlIcon(iconName) {
+        const controlButton = document.querySelector(
+          ".controls div:nth-child(2)"
+        );
+        controlButton.innerHTML = `<i class="fa-solid fa-${iconName}" id="ctrlIcon"></i>`;
+        ctrlIcon = document.getElementById("ctrlIcon");
+        FontAwesome.dom.i2svg({ node: ctrlIcon });
+      }
+
+      function toggleLibrary() {
+        libraryPanel.classList.toggle("open");
+      }
+
+      function loadSong(index) {
+        currentSongIndex = index;
+        const selected = songs[index];
+        document.getElementById("song-title").textContent = selected.title;
+        document.getElementById("song-artist").textContent = selected.artist;
+        document.getElementById("song-img").src = selected.cover;
+        song.src = selected.src;
+        song.load();
+        song.play().then(() => setControlIcon("pause")).catch(() => {
+          setControlIcon("play");
+        });
+        toggleLibrary();
+      }
+
+      function previousSong() {
+        loadSong((currentSongIndex - 1 + songs.length) % songs.length);
+      }
+
+      function nextSong() {
+        loadSong((currentSongIndex + 1) % songs.length);
+      }
+
+      function renderLibrary() {
+        songList.innerHTML = "";
+        songs.forEach((track, index) => {
+          const li = document.createElement("li");
+          li.classList.add("song-item");
+          li.innerHTML = `
+            <img src="${track.cover}" alt="cover" />
+            <div>
+              <h4>${track.title}</h4>
+              <p>${track.artist}</p>
+            </div>
+          `;
+          li.onclick = () => loadSong(index);
+          songList.appendChild(li);
+        });
+      }
+
+      song.onloadedmetadata = function () {
+        progress.max = song.duration;
+        progress.value = song.currentTime;
+      };
+
+      function playPause() {
+        if (!song.paused) {
+          song.pause();
+          setControlIcon("play");
+        } else {
+          song.play().then(() => setControlIcon("pause")).catch(() => {
+            setControlIcon("play");
+          });
+        }
+      }
+
+      song.onended = nextSong;
+
+      song.ontimeupdate = function () {
+        progress.value = song.currentTime;
+      };
+
+      progress.onchange = function () {
+        song.currentTime = progress.value;
+        song.play();
+        setControlIcon("pause");
+      };
+
+      renderLibrary();
+      loadSong(currentSongIndex);
+    </script>
+  </body>
+</html>
